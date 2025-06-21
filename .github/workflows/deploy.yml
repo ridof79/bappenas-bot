@@ -53,20 +53,36 @@ jobs:
     needs: deploy
     runs-on: self-hosted
     if: always()
-
+    
     steps:
-      - name: Notify via curl
-        run: |
-          STATUS="${{ job.status }}"
-          ICON="🚀"
-          if [ "$STATUS" != "success" ]; then
-            ICON="❌"
-          fi
-
-          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_NOTIFY_TOKEN }}/sendMessage \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d parse_mode=Markdown \
-            -d text="$ICON *Deployment Status*: *$STATUS*\n\ 📝 *Repository*: ${{ github.repository }}\n\ 🌿 *Branch*: ${{ github.ref_name }}\n\ 👤 *Author*: ${{ github.actor }}\n\ 💬 *Commit*: ${{ github.event.head_commit.message }}\n\ ⏰ *Time*: ${{ github.event.head_commit.timestamp }}\n\ 🔗 [View Commit](${{ github.event.head_commit.url }})"
-
-
-
+    - name: Notify via curl
+      if: always()  # Ensures notification runs even if previous steps fail
+      run: |
+        STATUS="${{ job.status }}"
+        ICON="🚀"
+        COLOR="success"
+        
+        if [ "$STATUS" != "success" ]; then
+          ICON="❌"
+          COLOR="failure"
+        fi
+        
+        # Escape special characters for Markdown
+        COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | sed 's/[_*\[`]/\\&/g')
+        
+        MESSAGE=$(cat <<EOF
+        $ICON *Deployment $COLOR*
+        📝 *Repository*: \`${{ github.repository }}\`
+        🌿 *Branch*: \`${{ github.ref_name }}\`
+        👤 *Author*: ${{ github.actor }}
+        💬 *Commit*: $COMMIT_MSG
+        ⏰ *Time*: ${{ github.event.head_commit.timestamp }}
+        🔗 [View Commit](${{ github.event.head_commit.url }})
+        EOF
+        )
+        
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_NOTIFY_TOKEN }}/sendMessage" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "parse_mode=Markdown" \
+          --data-urlencode "text=$MESSAGE" || echo "Failed to send Telegram notification"
