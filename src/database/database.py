@@ -173,6 +173,7 @@ class Database:
                 if result:
                     start_time, end_time, reminder_interval, enabled_days_json, is_active = result
                     return {
+                        'config_type': config_type,
                         'start_time': start_time,
                         'end_time': end_time,
                         'reminder_interval': reminder_interval,

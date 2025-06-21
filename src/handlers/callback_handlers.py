@@ -83,6 +83,12 @@ class CallbackHandlers:
             await self.show_clock_out_config(update, context)
         elif data == "view_config":
             await self.show_current_config(update, context)
+        elif data == "config_back":
+            # Go back to main config menu
+            await self.show_main_config_menu(update, context)
+        elif data == "config_main":
+            # Go back to main config menu
+            await self.show_main_config_menu(update, context)
     
     async def handle_config_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Wrapper for handle_config_callback that extracts data from callback_query"""
@@ -197,7 +203,7 @@ class CallbackHandlers:
             message += "🔴 **Clock Out:** Belum dikonfigurasi\n\n"
         
         keyboard = [
-            [InlineKeyboardButton("🔙 Kembali", callback_data="config_back")]
+            [InlineKeyboardButton("🔙 Kembali", callback_data="config_main")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -239,7 +245,7 @@ class CallbackHandlers:
         }
         
         keyboard = [
-            [InlineKeyboardButton("❌ Batal", callback_data="cancel_config")]
+            [InlineKeyboardButton("🔙 Kembali", callback_data=f"config_{config_type}")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -262,7 +268,7 @@ class CallbackHandlers:
         }
         
         keyboard = [
-            [InlineKeyboardButton("❌ Batal", callback_data="cancel_config")]
+            [InlineKeyboardButton("🔙 Kembali", callback_data=f"config_{config_type}")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -300,8 +306,7 @@ class CallbackHandlers:
                 keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
             
             keyboard.append([
-                InlineKeyboardButton("💾 Simpan", callback_data=f"save_{config_type}"),
-                InlineKeyboardButton("❌ Batal", callback_data="cancel_config")
+                InlineKeyboardButton("🔙 Kembali", callback_data=f"config_{config_type}")
             ])
             
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -462,4 +467,25 @@ class CallbackHandlers:
     async def handle_view_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Wrapper for handle_view_callback that extracts data from callback_query"""
         data = update.callback_query.data
-        await self.handle_view_callback(update, context, data) 
+        await self.handle_view_callback(update, context, data)
+    
+    async def show_main_config_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Show main configuration menu"""
+        query = update.callback_query
+        chat_id = query.message.chat.id
+        
+        # Get current configurations
+        clock_in_config = self.db.get_configuration(chat_id, 'clock_in')
+        clock_out_config = self.db.get_configuration(chat_id, 'clock_out')
+        
+        keyboard = [
+            [InlineKeyboardButton("🟢 Konfigurasi Clock In", callback_data="config_clock_in")],
+            [InlineKeyboardButton("🔴 Konfigurasi Clock Out", callback_data="config_clock_out")],
+            [InlineKeyboardButton("📊 Lihat Konfigurasi", callback_data="view_config")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        message = "⚙️ **Menu Konfigurasi**\n\n"
+        message += "Pilih jenis konfigurasi yang ingin diatur:"
+        
+        await query.edit_message_text(message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN) 
