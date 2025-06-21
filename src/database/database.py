@@ -237,26 +237,27 @@ class Database:
     def get_all_chat_groups(self):
         """Get all chat groups"""
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT chat_id, chat_title, chat_type, created_at
-                FROM chat_groups
-                ORDER BY created_at DESC
-            """)
-            
-            rows = cursor.fetchall()
-            chat_groups = []
-            
-            for row in rows:
-                chat_groups.append({
-                    'chat_id': row[0],
-                    'chat_title': row[1],
-                    'chat_type': row[2],
-                    'created_at': row[3]
-                })
-            
-            return chat_groups
-            
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT chat_id, chat_title, chat_type, created_at
+                    FROM chat_groups
+                    ORDER BY created_at DESC
+                """)
+                
+                rows = cursor.fetchall()
+                chat_groups = []
+                
+                for row in rows:
+                    chat_groups.append({
+                        'chat_id': row[0],
+                        'chat_title': row[1],
+                        'chat_type': row[2],
+                        'created_at': row[3]
+                    })
+                
+                return chat_groups
+                
         except Exception as e:
             logger.error(f"Error getting all chat groups: {e}")
             return []
@@ -264,31 +265,32 @@ class Database:
     def get_all_active_configurations(self):
         """Get all active configurations"""
         try:
-            cursor = self.conn.cursor()
-            cursor.execute("""
-                SELECT chat_id, config_type, start_time, end_time, 
-                       reminder_interval, enabled_days, created_at, updated_at
-                FROM configurations
-                ORDER BY updated_at DESC
-            """)
-            
-            rows = cursor.fetchall()
-            configurations = []
-            
-            for row in rows:
-                configurations.append({
-                    'chat_id': row[0],
-                    'config_type': row[1],
-                    'start_time': row[2],
-                    'end_time': row[3],
-                    'reminder_interval': row[4],
-                    'enabled_days': self._parse_enabled_days(row[5]),
-                    'created_at': row[6],
-                    'updated_at': row[7]
-                })
-            
-            return configurations
-            
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT chat_id, config_type, start_time, end_time, 
+                           reminder_interval, enabled_days, created_at, updated_at
+                    FROM configurations
+                    ORDER BY updated_at DESC
+                """)
+                
+                rows = cursor.fetchall()
+                configurations = []
+                
+                for row in rows:
+                    configurations.append({
+                        'chat_id': row[0],
+                        'config_type': row[1],
+                        'start_time': row[2],
+                        'end_time': row[3],
+                        'reminder_interval': row[4],
+                        'enabled_days': json.loads(row[5]) if row[5] else [],
+                        'created_at': row[6],
+                        'updated_at': row[7]
+                    })
+                
+                return configurations
+                
         except Exception as e:
             logger.error(f"Error getting all active configurations: {e}")
             return [] 

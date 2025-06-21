@@ -26,29 +26,50 @@ class CallbackHandlers:
         # Debug logging
         logger.info(f"Callback received: {data}")
         
-        await query.answer()
-        
-        if data.startswith("config_"):
-            logger.info(f"Handling config callback: {data}")
-            await self.handle_config_callback(update, context, data)
-        elif data.startswith("view_"):
-            logger.info(f"Handling view callback: {data}")
-            await self.handle_view_callback(update, context, data)
-        elif data.startswith("set_"):
-            logger.info(f"Handling set callback: {data}")
-            await self.handle_set_callback(update, context, data)
-        elif data.startswith("day_"):
-            logger.info(f"Handling day callback: {data}")
-            await self.handle_day_callback(update, context, data)
-        elif data.startswith("save_"):
-            logger.info(f"Handling save callback: {data}")
-            await self.handle_save_callback(update, context, data)
-        elif data.startswith("cancel_"):
-            logger.info(f"Handling cancel callback: {data}")
-            await self.handle_cancel_callback(update, context, data)
-        else:
-            logger.warning(f"Unknown callback data: {data}")
-            await query.answer("❌ Callback tidak dikenali")
+        try:
+            await query.answer()
+            
+            # Handle specific callback patterns first
+            if data in ["clock_in_button", "clock_out_button"]:
+                logger.info(f"Clock button callback: {data}")
+                # This should be handled by scheduled_handlers, not here
+                await query.answer("❌ Callback tidak dikenali")
+                return
+                
+            elif data == "refresh_attendance":
+                logger.info(f"Refresh attendance callback: {data}")
+                # This should be handled by scheduled_handlers, not here
+                await query.answer("❌ Callback tidak dikenali")
+                return
+                
+            elif data.startswith("config_"):
+                logger.info(f"Handling config callback: {data}")
+                await self.handle_config_callback(update, context, data)
+            elif data.startswith("view_"):
+                logger.info(f"Handling view callback: {data}")
+                await self.handle_view_callback(update, context, data)
+            elif data.startswith("set_"):
+                logger.info(f"Handling set callback: {data}")
+                await self.handle_set_callback(update, context, data)
+            elif data.startswith("day_"):
+                logger.info(f"Handling day callback: {data}")
+                await self.handle_day_callback(update, context, data)
+            elif data.startswith("save_"):
+                logger.info(f"Handling save callback: {data}")
+                await self.handle_save_callback(update, context, data)
+            elif data.startswith("cancel_"):
+                logger.info(f"Handling cancel callback: {data}")
+                await self.handle_cancel_callback(update, context, data)
+            else:
+                logger.warning(f"Unknown callback data: {data}")
+                await query.answer("❌ Callback tidak dikenali")
+                
+        except Exception as e:
+            logger.error(f"Error in handle_callback: {e}")
+            try:
+                await query.answer("❌ Terjadi kesalahan")
+            except:
+                pass
     
     async def handle_config_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle configuration menu callbacks"""
