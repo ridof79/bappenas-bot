@@ -112,17 +112,17 @@ class AttendanceBot:
         """Setup scheduled jobs for reminders"""
         job_queue = self.application.job_queue
         
-        # Clock in reminder - check every 5 minutes
+        # Clock in reminder - check every 1 minute
         job_queue.run_repeating(
             self.clock_in_reminder_job,
-            interval=timedelta(minutes=5),
+            interval=timedelta(minutes=1),
             first=datetime.now() + timedelta(minutes=1)
         )
         
-        # Clock out reminder - check every 5 minutes
+        # Clock out reminder - check every 1 minute
         job_queue.run_repeating(
             self.clock_out_reminder_job,
-            interval=timedelta(minutes=5),
+            interval=timedelta(minutes=1),
             first=datetime.now() + timedelta(minutes=1)
         )
     

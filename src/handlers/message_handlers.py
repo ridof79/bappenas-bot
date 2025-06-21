@@ -268,29 +268,28 @@ class MessageHandlers:
                 clock_in_count = len(today_attendance.get('clock_in', {}))
                 clock_out_count = len(today_attendance.get('clock_out', {}))
                 
-                if clock_in_count > 0 and clock_out_count < clock_in_count:
-                    # Some people have clocked in but not out
-                    message = (
-                        f"🌆 **Pengingat Clock Out** - {current_time.strftime('%H:%M')}\n\n"
-                        f"Jangan lupa clock out!\n\n"
-                        f"🟢 Clock In: {clock_in_count} orang\n"
-                        f"🔴 Clock Out: {clock_out_count} orang\n\n"
-                        f"Gunakan /clockout untuk mencatat pulang."
-                    )
-                    
-                    keyboard = [
-                        [InlineKeyboardButton("🕕 Clock Out", callback_data="clock_out_button")],
-                        [InlineKeyboardButton("📊 Cek Status", callback_data="refresh_attendance")]
-                    ]
-                    reply_markup = InlineKeyboardMarkup(keyboard)
-                    
-                    await context.bot.send_message(
-                        chat_id=chat_id,
-                        text=message,
-                        reply_markup=reply_markup,
-                        parse_mode=ParseMode.MARKDOWN
-                    )
-                    logger.info(f"Clock-out reminder sent to chat {chat_id}")
+                # Send reminder if it's time for clock out, regardless of clock in status
+                message = (
+                    f"🌆 **Pengingat Clock Out** - {current_time.strftime('%H:%M')}\n\n"
+                    f"Jangan lupa clock out!\n\n"
+                    f"🟢 Clock In: {clock_in_count} orang\n"
+                    f"🔴 Clock Out: {clock_out_count} orang\n\n"
+                    f"Gunakan /clockout untuk mencatat pulang."
+                )
+                
+                keyboard = [
+                    [InlineKeyboardButton("🕕 Clock Out", callback_data="clock_out_button")],
+                    [InlineKeyboardButton("📊 Cek Status", callback_data="refresh_attendance")]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=message,
+                    reply_markup=reply_markup,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                logger.info(f"Clock-out reminder sent to chat {chat_id}")
                 
             except Exception as e:
                 logger.error(f"Error sending clock-out reminder to {chat_id}: {e}") 
