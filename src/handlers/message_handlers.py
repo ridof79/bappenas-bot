@@ -268,7 +268,29 @@ class MessageHandlers:
                 clock_in_count = len(today_attendance.get('clock_in', {}))
                 clock_out_count = len(today_attendance.get('clock_out', {}))
                 
-                # Send reminder if it's time for clock out, regardless of clock in status
+-21 08:08:10.555282+00:00)
+Jun 21 15:08:10 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:10,565 - apscheduler.executors.default - INFO - Running job "clock_out_reminder_job (trigger: interval[0:05:00], next run at: 2025-06-21 08:13:10 UTC)" (scheduled at 2025-06-21 08:08:10.557102+00:00)
+Jun 21 15:08:10 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:10,567 - apscheduler.executors.default - INFO - Job "clock_in_reminder_job (trigger: interval[0:05:00], next run at: 2025-06-21 08:13:10 UTC)" executed successfully
+Jun 21 15:08:10 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:10,567 - apscheduler.executors.default - INFO - Job "clock_out_reminder_job (trigger: interval[0:05:00], next run at: 2025-06-21 08:13:10 UTC)" executed successfully
+Jun 21 15:08:11 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:11,438 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8088809720:AAEHRay1cECIgswQaQNfZ0ioHsXRY5ZJl4k/getUpdates "HTTP/1.1 200 OK"
+Jun 21 15:08:16 ip-172-31-95-75 systemd[1]: Stopping telegram-bot.service - Telegram Attendance Bot...
+Jun 21 15:08:16 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:16,965 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8088809720:AAEHRay1cECIgswQaQNfZ0ioHsXRY5ZJl4k/getUpdates "HTTP/1.1 200 OK"
+Jun 21 15:08:16 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:16,966 - telegram.ext.Application - INFO - Application is stopping. This might take a moment.
+Jun 21 15:08:16 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:16,966 - apscheduler.scheduler - INFO - Scheduler has been shut down
+Jun 21 15:08:16 ip-172-31-95-75 telegram-bot[27862]: 2025-06-21 08:08:16,977 - telegram.ext.Application - INFO - Application.stop() complete
+Jun 21 15:08:17 ip-172-31-95-75 systemd[1]: telegram-bot.service: Deactivated successfully.
+Jun 21 15:08:17 ip-172-31-95-75 systemd[1]: Stopped telegram-bot.service - Telegram Attendance Bot.
+Jun 21 15:08:17 ip-172-31-95-75 systemd[1]: Started telegram-bot.service - Telegram Attendance Bot.
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,408 - src.database.database - INFO - Database initialized successfully
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,493 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,493 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,494 - __main__ - INFO - Starting Attendance Bot...
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,756 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8088809720:AAEHRay1cECIgswQaQNfZ0ioHsXRY5ZJl4k/getMe "HTTP/1.1 200 OK"
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,841 - httpx - INFO - HTTP Request: POST https://api.telegram.org/bot8088809720:AAEHRay1cECIgswQaQNfZ0ioHsXRY5ZJl4k/deleteWebhook "HTTP/1.1 200 OK"
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,843 - apscheduler.scheduler - INFO - Added job "clock_in_reminder_job" to job store "default"
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,843 - apscheduler.scheduler - INFO - Added job "clock_out_reminder_job" to job store "default"
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,843 - apscheduler.scheduler - INFO - Scheduler started
+Jun 21 15:08:17 ip-172-31-95-75 telegram-bot[28156]: 2025-06-21 15:08:17,843 - telegram.ext.Application - INFO - Application started                # Send reminder if it's time for clock out, regardless of clock in status
                 message = (
                     f"🌆 **Pengingat Clock Out** - {current_time.strftime('%H:%M')}\n\n"
                     f"Jangan lupa clock out!\n\n"
