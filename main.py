@@ -73,27 +73,27 @@ class AttendanceBot:
         
         # Configuration callbacks - specific patterns
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_day_callback,
+            self.callback_handlers.handle_day_callback_wrapper,
             pattern="^day_"
         ))
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_save_callback,
+            self.callback_handlers.handle_save_callback_wrapper,
             pattern="^save_"
         ))
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_cancel_callback,
+            self.callback_handlers.handle_cancel_callback_wrapper,
             pattern="^cancel_"
         ))
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_set_callback,
+            self.callback_handlers.handle_set_callback_wrapper,
             pattern="^set_"
         ))
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_config_callback,
+            self.callback_handlers.handle_config_callback_wrapper,
             pattern="^config_"
         ))
         self.application.add_handler(CallbackQueryHandler(
-            self.callback_handlers.handle_view_callback,
+            self.callback_handlers.handle_view_callback_wrapper,
             pattern="^view_"
         ))
         

@@ -84,6 +84,11 @@ class CallbackHandlers:
         elif data == "view_config":
             await self.show_current_config(update, context)
     
+    async def handle_config_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_config_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_config_callback(update, context, data)
+    
     async def handle_view_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle view callbacks"""
         if data == "view_config":
@@ -397,6 +402,11 @@ class CallbackHandlers:
             logger.error(f"Error in handle_day_callback: {e}")
             await query.answer("❌ Terjadi kesalahan saat mengatur hari")
     
+    async def handle_day_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_day_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_day_callback(update, context, data)
+    
     async def handle_save_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle save configuration callbacks"""
         query = update.callback_query
@@ -413,6 +423,11 @@ class CallbackHandlers:
         else:
             await query.answer("❌ Tidak ada konfigurasi untuk disimpan")
     
+    async def handle_save_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_save_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_save_callback(update, context, data)
+    
     async def handle_cancel_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle cancel callbacks"""
         query = update.callback_query
@@ -425,6 +440,11 @@ class CallbackHandlers:
         await query.answer("❌ Dibatalkan")
         await self.show_current_config(update, context)
     
+    async def handle_cancel_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_cancel_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_cancel_callback(update, context, data)
+    
     def get_user_state(self, user_id: int):
         """Get user configuration state"""
         return self.config_states.get(user_id)
@@ -432,4 +452,14 @@ class CallbackHandlers:
     def clear_user_state(self, user_id: int):
         """Clear user configuration state"""
         if user_id in self.config_states:
-            del self.config_states[user_id] 
+            del self.config_states[user_id]
+    
+    async def handle_set_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_set_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_set_callback(update, context, data)
+    
+    async def handle_view_callback_wrapper(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Wrapper for handle_view_callback that extracts data from callback_query"""
+        data = update.callback_query.data
+        await self.handle_view_callback(update, context, data) 
