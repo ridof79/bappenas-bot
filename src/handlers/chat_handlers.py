@@ -156,6 +156,15 @@ class ChatHandlers:
                 await update.message.reply_text("❌ Tidak dapat memeriksa status admin bot.")
                 return
             
+            # Add chat group to database
+            try:
+                self.db.add_chat_group(chat.id, chat.title, chat.type)
+                logger.info(f"Chat group {chat.id} ({chat.title}) added to database via /setup")
+            except Exception as e:
+                logger.error(f"Error adding chat group to database: {e}")
+                await update.message.reply_text("❌ Gagal mendaftarkan grup ke database.")
+                return
+            
             # Setup scheduling
             self.scheduled_handlers.schedule_daily_messages(chat.id, context)
             
@@ -163,7 +172,9 @@ class ChatHandlers:
             clock_in_config = self.db.get_configuration(chat.id, 'clock_in')
             clock_out_config = self.db.get_configuration(chat.id, 'clock_out')
             
-            message = "✅ Pengingat clock harian telah diatur!\n\n"
+            message = "✅ **Setup berhasil!** Pengingat clock harian telah diatur.\n\n"
+            message += f"📝 **Grup:** {chat.title}\n"
+            message += f"🆔 **Chat ID:** {chat.id}\n\n"
             
             if clock_in_config:
                 message += f"🟢 **Clock In:** {clock_in_config['start_time']} - {clock_in_config['end_time']}\n"
