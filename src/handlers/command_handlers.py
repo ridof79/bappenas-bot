@@ -342,6 +342,11 @@ class CommandHandlers:
             chat = update.effective_chat
             user = update.effective_user
             
+            # Check if context.bot exists
+            if not context or not context.bot:
+                logger.warning("Context or bot is None, cannot verify admin status")
+                return False
+            
             # Get chat member info
             chat_member = await context.bot.get_chat_member(chat.id, user.id)
             
