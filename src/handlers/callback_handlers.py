@@ -234,30 +234,40 @@ class CallbackHandlers:
         """Show days setup interface"""
         query = update.callback_query
         
-        # Get current configuration
-        chat_id = query.message.chat.id
-        current_config = self.db.get_configuration(chat_id, config_type)
-        enabled_days = current_config['enabled_days'] if current_config else Settings.DEFAULT_ENABLED_DAYS
-        
-        keyboard = []
-        for day_num in range(7):
-            day_name = Settings.get_day_name(day_num)
-            is_enabled = day_num in enabled_days
-            button_text = f"{'✅' if is_enabled else '❌'} {day_name}"
-            callback_data = f"day_{config_type}_{day_num}"
-            keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
-        
-        keyboard.append([
-            InlineKeyboardButton("💾 Simpan", callback_data=f"save_{config_type}"),
-            InlineKeyboardButton("❌ Batal", callback_data="cancel_config")
-        ])
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        message = f"📅 **Atur Hari Aktif {Settings.get_clock_type_name(config_type)}**\n\n"
-        message += "Pilih hari yang aktif untuk pengingat otomatis:"
-        
-        await query.edit_message_text(message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+        try:
+            # Get current configuration
+            chat_id = query.message.chat.id
+            current_config = self.db.get_configuration(chat_id, config_type)
+            
+            # Initialize enabled_days with default or current value
+            if current_config and 'enabled_days' in current_config:
+                enabled_days = current_config['enabled_days']
+            else:
+                enabled_days = [0, 1, 2, 3, 4]  # Monday to Friday
+            
+            keyboard = []
+            for day_num in range(7):
+                day_name = Settings.get_day_name(day_num)
+                is_enabled = day_num in enabled_days
+                button_text = f"{'✅' if is_enabled else '❌'} {day_name}"
+                callback_data = f"day_{config_type}_{day_num}"
+                keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+            
+            keyboard.append([
+                InlineKeyboardButton("💾 Simpan", callback_data=f"save_{config_type}"),
+                InlineKeyboardButton("❌ Batal", callback_data="cancel_config")
+            ])
+            
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            message = f"📅 **Atur Hari Aktif {Settings.get_clock_type_name(config_type)}**\n\n"
+            message += "Pilih hari yang aktif untuk pengingat otomatis:"
+            
+            await query.edit_message_text(message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+            
+        except Exception as e:
+            logger.error(f"Error in show_days_setup: {e}")
+            await query.answer("❌ Terjadi kesalahan saat menampilkan pengaturan hari")
     
     async def handle_day_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle day selection callbacks"""
@@ -267,39 +277,55 @@ class CallbackHandlers:
         day_num = int(parts[2])
         chat_id = query.message.chat.id
         
-        # Get current configuration
-        current_config = self.db.get_configuration(chat_id, config_type)
-        enabled_days = current_config['enabled_days'] if current_config else Settings.DEFAULT_ENABLED_DAYS.copy()
-        
-        # Toggle day
-        if day_num in enabled_days:
-            enabled_days.remove(day_num)
-        else:
-            enabled_days.append(day_num)
-        
-        # Update configuration
-        if current_config:
-            start_time = current_config['start_time']
-            end_time = current_config['end_time']
-            interval = current_config['reminder_interval']
-        else:
-            if config_type == 'clock_in':
-                start_time = Settings.DEFAULT_CLOCK_IN_START
-                end_time = Settings.DEFAULT_CLOCK_IN_END
+        try:
+            # Get current configuration
+            current_config = self.db.get_configuration(chat_id, config_type)
+            
+            # Initialize enabled_days with default or current value
+            if current_config and 'enabled_days' in current_config:
+                enabled_days = current_config['enabled_days'].copy()
             else:
-                start_time = Settings.DEFAULT_CLOCK_OUT_START
-                end_time = Settings.DEFAULT_CLOCK_OUT_END
-            interval = Settings.DEFAULT_REMINDER_INTERVAL
-        
-        # Save configuration
-        success = self.db.save_configuration(chat_id, config_type, start_time, end_time, interval, enabled_days)
-        
-        if success:
-            await query.answer(f"Hari {Settings.get_day_name(day_num)} {'diaktifkan' if day_num in enabled_days else 'dinonaktifkan'}")
-            # Refresh the days setup interface
-            await self.show_days_setup(update, context, config_type)
-        else:
-            await query.answer("❌ Gagal menyimpan konfigurasi")
+                enabled_days = [0, 1, 2, 3, 4].copy()  # Monday to Friday
+            
+            # Toggle day
+            if day_num in enabled_days:
+                enabled_days.remove(day_num)
+            else:
+                enabled_days.append(day_num)
+            
+            # Sort enabled_days for consistency
+            enabled_days.sort()
+            
+            # Update configuration
+            if current_config:
+                start_time = current_config['start_time']
+                end_time = current_config['end_time']
+                interval = current_config['reminder_interval']
+            else:
+                if config_type == 'clock_in':
+                    start_time = "07:00"
+                    end_time = "09:00"
+                else:
+                    start_time = "16:00"
+                    end_time = "18:00"
+                interval = 15
+            
+            # Save configuration
+            success = self.db.save_configuration(chat_id, config_type, start_time, end_time, interval, enabled_days)
+            
+            if success:
+                day_name = Settings.get_day_name(day_num)
+                status = "diaktifkan" if day_num in enabled_days else "dinonaktifkan"
+                await query.answer(f"Hari {day_name} {status}")
+                
+                # Refresh the days setup interface
+                await self.show_days_setup(update, context, config_type)
+            else:
+                await query.answer("❌ Gagal menyimpan konfigurasi")
+                
+        except Exception as e:
+            logger.error(f"Error in handle_day_callback: {e}")
+            await query.answer("❌ Terjadi kesalahan saat mengatur hari")
     
     async def handle_save_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle save configuration callbacks"""

@@ -84,25 +84,4 @@ class Settings:
     @classmethod
     def validate_enabled_days(cls, days: list) -> bool:
         """Validate enabled days list"""
-        return all(0 <= day <= 6 for day in days) and len(days) > 0
-    
-    @staticmethod
-    def get_clock_type_name(config_type: str) -> str:
-        """Get display name for clock type"""
-        if config_type == 'clock_in':
-            return 'Clock In'
-        elif config_type == 'clock_out':
-            return 'Clock Out'
-        else:
-            return config_type.replace('_', ' ').title()
-    
-    @staticmethod
-    def get_day_name(day_num: int) -> str:
-        """Get day name from day number"""
-        days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu']
-        return days[day_num] if 0 <= day_num < 7 else 'Unknown'
-    
-    @staticmethod
-    def validate_reminder_interval(interval: int) -> bool:
-        """Validate reminder interval"""
-        return 1 <= interval <= 1440  # 1 minute to 24 hours 
+        return all(0 <= day <= 6 for day in days) and len(days) > 0 
