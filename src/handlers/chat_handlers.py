@@ -165,10 +165,44 @@ class ChatHandlers:
                 await update.message.reply_text("❌ Gagal mendaftarkan grup ke database.")
                 return
             
+            # Set up default configurations if none exist
+            clock_in_config = self.db.get_configuration(chat.id, 'clock_in')
+            clock_out_config = self.db.get_configuration(chat.id, 'clock_out')
+            
+            if not clock_in_config:
+                # Set default clock in configuration
+                success = self.db.save_configuration(
+                    chat_id=chat.id,
+                    config_type='clock_in',
+                    start_time=Settings.DEFAULT_CLOCK_IN_START,
+                    end_time=Settings.DEFAULT_CLOCK_IN_END,
+                    reminder_interval=Settings.DEFAULT_REMINDER_INTERVAL,
+                    enabled_days=Settings.DEFAULT_ENABLED_DAYS
+                )
+                if success:
+                    logger.info(f"Default clock_in config created for chat {chat.id}")
+                else:
+                    logger.error(f"Failed to create default clock_in config for chat {chat.id}")
+            
+            if not clock_out_config:
+                # Set default clock out configuration
+                success = self.db.save_configuration(
+                    chat_id=chat.id,
+                    config_type='clock_out',
+                    start_time=Settings.DEFAULT_CLOCK_OUT_START,
+                    end_time=Settings.DEFAULT_CLOCK_OUT_END,
+                    reminder_interval=Settings.DEFAULT_REMINDER_INTERVAL,
+                    enabled_days=Settings.DEFAULT_ENABLED_DAYS
+                )
+                if success:
+                    logger.info(f"Default clock_out config created for chat {chat.id}")
+                else:
+                    logger.error(f"Failed to create default clock_out config for chat {chat.id}")
+            
             # Setup scheduling
             self.scheduled_handlers.schedule_daily_messages(chat.id, context)
             
-            # Get current configurations
+            # Get current configurations (refresh after creating defaults)
             clock_in_config = self.db.get_configuration(chat.id, 'clock_in')
             clock_out_config = self.db.get_configuration(chat.id, 'clock_out')
             
