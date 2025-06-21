@@ -21,22 +21,34 @@ class CallbackHandlers:
     async def handle_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle all callback queries"""
         query = update.callback_query
-        await query.answer()
-        
         data = query.data
         
+        # Debug logging
+        logger.info(f"Callback received: {data}")
+        
+        await query.answer()
+        
         if data.startswith("config_"):
+            logger.info(f"Handling config callback: {data}")
             await self.handle_config_callback(update, context, data)
         elif data.startswith("view_"):
+            logger.info(f"Handling view callback: {data}")
             await self.handle_view_callback(update, context, data)
         elif data.startswith("set_"):
+            logger.info(f"Handling set callback: {data}")
             await self.handle_set_callback(update, context, data)
         elif data.startswith("day_"):
+            logger.info(f"Handling day callback: {data}")
             await self.handle_day_callback(update, context, data)
         elif data.startswith("save_"):
+            logger.info(f"Handling save callback: {data}")
             await self.handle_save_callback(update, context, data)
         elif data.startswith("cancel_"):
+            logger.info(f"Handling cancel callback: {data}")
             await self.handle_cancel_callback(update, context, data)
+        else:
+            logger.warning(f"Unknown callback data: {data}")
+            await query.answer("❌ Callback tidak dikenali")
     
     async def handle_config_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle configuration menu callbacks"""
