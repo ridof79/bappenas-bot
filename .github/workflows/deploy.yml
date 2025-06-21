@@ -18,6 +18,16 @@ jobs:
           cd /home/ubuntu/telegram-bappenas-bot
           git pull origin main
 
+      - name: Backup database before deployment
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
+          if [ -f "data/attendance.db" ]; then
+            cp data/attendance.db data/attendance.db.backup.$(date +%Y%m%d_%H%M%S)
+            echo "Database backed up successfully"
+          else
+            echo "No existing database found"
+          fi
+
       - name: Setup virtualenv & install dependencies
         run: |
           cd /home/ubuntu/telegram-bappenas-bot
@@ -34,7 +44,7 @@ jobs:
           # Upgrade pip and install requirements
           pip install --upgrade pip
           
-          # If using requirements.txt in repo
+          # Install requirements
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
           else
@@ -42,12 +52,41 @@ jobs:
             pip install python-telegram-bot[job-queue] pytz
           fi
 
+      - name: Create data directory if not exists
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
+          mkdir -p data
+          chmod 755 data
+
+      - name: Update systemd service file
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
+          if [ -f "telegram-bot.service" ]; then
+            sudo cp telegram-bot.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            echo "Systemd service updated"
+          fi
+
       - name: Restart Telegram bot service
         run: |
           sudo systemctl restart telegram-bot.service
-          sleep 3
+          sleep 5
           sudo systemctl status telegram-bot.service --no-pager
-          sudo journalctl -u telegram-bot.service -n 10 --no-pager
+          sudo journalctl -u telegram-bot.service -n 15 --no-pager
+
+      - name: Check bot health
+        run: |
+          # Wait a bit for bot to start
+          sleep 10
+          
+          # Check if service is running
+          if sudo systemctl is-active --quiet telegram-bot.service; then
+            echo "✅ Bot service is running successfully"
+          else
+            echo "❌ Bot service failed to start"
+            sudo journalctl -u telegram-bot.service -n 20 --no-pager
+            exit 1
+          fi
 
   notify:
     needs: deploy
@@ -78,6 +117,7 @@ jobs:
         💬 *Commit*: $COMMIT_MSG
         ⏰ *Time*: ${{ github.event.head_commit.timestamp }}
         🔗 [View Commit](${{ github.event.head_commit.url }})
+        📊 *Bot Status*: $(sudo systemctl is-active telegram-bot.service)
         EOF
         )
         

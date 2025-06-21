@@ -1,0 +1,28 @@
+[Unit]
+Description=Telegram Attendance Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/telegram-bappenas-bot
+Environment=PATH=/home/ubuntu/telegram-bappenas-bot/bot_env/bin
+Environment=BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+ExecStart=/home/ubuntu/telegram-bappenas-bot/bot_env/bin/python main.py
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=telegram-bot
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/ubuntu/telegram-bappenas-bot/data
+
+[Install]
+WantedBy=multi-user.target 
