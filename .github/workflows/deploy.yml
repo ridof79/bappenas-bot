@@ -55,17 +55,24 @@ jobs:
     if: always()
 
     steps:
-      - name: Notify deployment status
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          token: ${{ secrets.TELEGRAM_NOTIFY_TOKEN }}
-          message: |
-            🚀 **Deployment Status**: ${{ job.status }}
+      - name: Notify via curl
+        run: |
+          STATUS="${{ job.status }}"
+          ICON="🚀"
+          if [ "$STATUS" != "success" ]; then
+            ICON="❌"
+          fi
 
-            📝 **Repository**: ${{ github.repository }}
-            🌿 **Branch**: ${{ github.ref_name }}
-            👤 **Author**: ${{ github.actor }}
-            💬 **Commit**: ${{ github.event.head_commit.message }}
-            ⏰ **Time**: ${{ github.event.head_commit.timestamp }}
-            🔗 **Commit URL**: ${{ github.event.head_commit.url }}
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_NOTIFY_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="$ICON *Deployment Status*: *$STATUS*\n\
+📝 *Repository*: ${{ github.repository }}\n\
+🌿 *Branch*: ${{ github.ref_name }}\n\
+👤 *Author*: ${{ github.actor }}\n\
+💬 *Commit*: ${{ github.event.head_commit.message }}\n\
+⏰ *Time*: ${{ github.event.head_commit.timestamp }}\n\
+🔗 [View Commit](${{ github.event.head_commit.url }})"
+
+
+
