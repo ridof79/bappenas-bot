@@ -12,12 +12,12 @@ jobs:
     steps:
     - name: Pull latest changes
       run: |
-        cd /home/ubuntu/telegram-bot
+        cd /home/ubuntu/telegram-bappenas-bot
         git pull origin main
 
     - name: Activate venv & install dependencies
       run: |
-        cd /home/ubuntu/telegram-bot
+        cd /home/ubuntu/telegram-bappenas-bot
         source bot_env/bin/activate
         pip install -r requirements.txt
 
