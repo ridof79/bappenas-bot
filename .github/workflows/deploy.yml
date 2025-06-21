@@ -5,46 +5,67 @@ on:
   push:
     branches: [ main ]
 
+env:
+  BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-    - name: Pull latest changes
-      run: |
-        cd /home/ubuntu/telegram-bappenas-bot
-        git pull origin main
+      - name: Pull latest changes from main
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
+          git pull origin main
 
-    - name: Activate venv & install dependencies
-      run: |
-        cd /home/ubuntu/telegram-bappenas-bot
-        source bot_env/bin/activate
-        pip install -r requirements.txt
+      - name: Setup virtualenv & install dependencies
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
 
-    - name: Restart bot service
-      run: |
-        sudo systemctl restart telegram-bot.service
-        sleep 5
-        sudo systemctl status telegram-bot.service
-        sudo journalctl -u telegram-bot.service -n 10 --no-pager
+          # Create virtual environment if not exists
+          if [ ! -d "bot_env" ]; then
+            echo "Creating virtual environment..."
+            python3 -m venv bot_env
+          fi
+
+          # Activate virtualenv
+          source bot_env/bin/activate
+
+          # Upgrade pip and install requirements
+          pip install --upgrade pip
+          
+          # If using requirements.txt in repo
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          else
+            # Fallback install for python-telegram-bot
+            pip install python-telegram-bot[job-queue] pytz
+          fi
+
+      - name: Restart Telegram bot service
+        run: |
+          sudo systemctl restart telegram-bot.service
+          sleep 3
+          sudo systemctl status telegram-bot.service --no-pager
+          sudo journalctl -u telegram-bot.service -n 10 --no-pager
 
   notify:
     needs: deploy
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
-    - name: Notify deployment status
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_CHAT_ID }}
-        token: ${{ secrets.TELEGRAM_NOTIFY_TOKEN }}
-        message: |
-          🚀 **Deployment Status**: ${{ job.status }}
-          
-          📝 **Repository**: ${{ github.repository }}
-          🌟 **Branch**: ${{ github.ref_name }}
-          👤 **Author**: ${{ github.actor }}
-          💬 **Commit**: ${{ github.event.head_commit.message }}
-          ⏰ **Time**: ${{ github.event.head_commit.timestamp }}
-          🔗 **Commit URL**: ${{ github.event.head_commit.url }}
+      - name: Notify deployment status
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_NOTIFY_TOKEN }}
+          message: |
+            🚀 **Deployment Status**: ${{ job.status }}
+
+            📝 **Repository**: ${{ github.repository }}
+            🌿 **Branch**: ${{ github.ref_name }}
+            👤 **Author**: ${{ github.actor }}
+            💬 **Commit**: ${{ github.event.head_commit.message }}
+            ⏰ **Time**: ${{ github.event.head_commit.timestamp }}
+            🔗 **Commit URL**: ${{ github.event.head_commit.url }}
