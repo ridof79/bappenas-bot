@@ -74,13 +74,33 @@ class Database:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                
+                # Check if chat group already exists
                 cursor.execute('''
-                    INSERT OR REPLACE INTO chat_groups 
-                    (chat_id, chat_title, chat_type, created_at)
-                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                ''', (chat_id, chat_title, chat_type))
+                    SELECT chat_id FROM chat_groups 
+                    WHERE chat_id = ?
+                ''', (chat_id,))
+                
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Update existing chat group
+                    cursor.execute('''
+                        UPDATE chat_groups 
+                        SET chat_title = ?, chat_type = ?
+                        WHERE chat_id = ?
+                    ''', (chat_title, chat_type, chat_id))
+                    logger.info(f"✅ Chat group updated: ID={chat_id}, Title='{chat_title}', Type={chat_type}")
+                else:
+                    # Insert new chat group
+                    cursor.execute('''
+                        INSERT INTO chat_groups 
+                        (chat_id, chat_title, chat_type, created_at)
+                        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                    ''', (chat_id, chat_title, chat_type))
+                    logger.info(f"✅ Chat group created: ID={chat_id}, Title='{chat_title}', Type={chat_type}")
+                
                 conn.commit()
-                logger.info(f"✅ Chat group saved to database: ID={chat_id}, Title='{chat_title}', Type={chat_type}")
                 return True
         except Exception as e:
             logger.error(f"❌ Error adding chat group to database: {e}")
@@ -147,16 +167,37 @@ class Database:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                enabled_days_json = json.dumps(enabled_days)
                 
+                # Check if configuration already exists
                 cursor.execute('''
-                    INSERT OR REPLACE INTO configurations 
-                    (chat_id, config_type, start_time, end_time, reminder_interval, 
-                     enabled_days, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ''', (chat_id, config_type, start_time, end_time, reminder_interval, enabled_days_json))
+                    SELECT id FROM configurations 
+                    WHERE chat_id = ? AND config_type = ?
+                ''', (chat_id, config_type))
+                
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Update existing configuration
+                    enabled_days_json = json.dumps(enabled_days)
+                    cursor.execute('''
+                        UPDATE configurations 
+                        SET start_time = ?, end_time = ?, reminder_interval = ?, 
+                            enabled_days = ?, updated_at = CURRENT_TIMESTAMP
+                        WHERE chat_id = ? AND config_type = ?
+                    ''', (start_time, end_time, reminder_interval, enabled_days_json, chat_id, config_type))
+                    logger.info(f"✅ Configuration updated: Chat={chat_id}, Type={config_type}, Time={start_time}-{end_time}, Interval={reminder_interval}min, Days={enabled_days}")
+                else:
+                    # Insert new configuration
+                    enabled_days_json = json.dumps(enabled_days)
+                    cursor.execute('''
+                        INSERT INTO configurations 
+                        (chat_id, config_type, start_time, end_time, reminder_interval, 
+                         enabled_days, updated_at)
+                        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ''', (chat_id, config_type, start_time, end_time, reminder_interval, enabled_days_json))
+                    logger.info(f"✅ Configuration created: Chat={chat_id}, Type={config_type}, Time={start_time}-{end_time}, Interval={reminder_interval}min, Days={enabled_days}")
+                
                 conn.commit()
-                logger.info(f"✅ Configuration saved: Chat={chat_id}, Type={config_type}, Time={start_time}-{end_time}, Interval={reminder_interval}min, Days={enabled_days}")
                 return True
         except Exception as e:
             logger.error(f"❌ Error saving configuration: {e}")
