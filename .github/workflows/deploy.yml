@@ -1,0 +1,88 @@
+# .github/workflows/deploy.yml
+name: Deploy Telegram Bot to EC2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install python-telegram-bot[job-queue] pytz
+    
+    - name: Test bot syntax
+      run: |
+        python -m py_compile clock_bot.py
+    
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          # Navigate to bot directory
+          cd /home/ubuntu/telegram-clock-bot
+          
+          # Pull latest changes
+          git pull origin main
+          
+          # Activate virtual environment
+          source bot_env/bin/activate
+          
+          # Install/update dependencies
+          pip install -r requirements.txt
+          
+          # Set bot token from environment
+          export BOT_TOKEN="${{ secrets.BOT_TOKEN }}"
+          
+          # Restart the service
+          sudo systemctl restart telegram-clock-bot.service
+          
+          # Check if service is running
+          sleep 5
+          sudo systemctl status telegram-clock-bot.service
+          
+          # Show recent logs
+          sudo journalctl -u telegram-clock-bot.service -n 10 --no-pager
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify deployment status
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_NOTIFY_TOKEN }}
+        message: |
+          🚀 **Deployment Status**: ${{ job.status }}
+          
+          📝 **Repository**: ${{ github.repository }}
+          🌟 **Branch**: ${{ github.ref_name }}
+          👤 **Author**: ${{ github.actor }}
+          💬 **Commit**: ${{ github.event.head_commit.message }}
+          
+          ⏰ **Time**: ${{ github.event.head_commit.timestamp }}
+          🔗 **Commit URL**: ${{ github.event.head_commit.url }}
