@@ -60,6 +60,8 @@ class AttendanceBot:
         self.application.add_handler(CommandHandler("config", self.command_handlers.config_command))
         self.application.add_handler(CommandHandler("help", self.command_handlers.help_command))
         self.application.add_handler(CommandHandler("setup", self.chat_handlers.setup_commands))
+        self.application.add_handler(CommandHandler("trigger_clockin", self.command_handlers.trigger_clockin_command))
+        self.application.add_handler(CommandHandler("trigger_clockout", self.command_handlers.trigger_clockout_command))
         
         # Callback query handlers - specific patterns first (most specific to least specific)
         self.application.add_handler(CallbackQueryHandler(
@@ -163,6 +165,8 @@ class AttendanceBot:
             ("status", "Laporan kehadiran detail"),
             ("config", "Konfigurasi clock in/out"),
             ("setup", "Setup pengingat otomatis"),
+            ("trigger_clockin", "Kirim pengingat clock in manual"),
+            ("trigger_clockout", "Kirim pengingat clock out manual"),
             ("help", "Bantuan penggunaan")
         ])
     

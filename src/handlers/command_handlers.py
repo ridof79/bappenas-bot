@@ -218,32 +218,136 @@ class CommandHandlers:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
         help_text = """
-📚 **Bantuan Penggunaan Attendance Bot**
+🤖 **Bantuan Penggunaan Bot**
 
-🤖 **Perintah Umum:**
-• `/start` - Memulai bot dan melihat fitur
-• `/ping` - Cek status bot
-• `/help` - Menampilkan bantuan ini
+**Commands:**
+/start - Mulai bot
+/ping - Cek status bot
+/clockin - Clock in manual
+/clockout - Clock out manual
+/check - Cek kehadiran hari ini
+/status - Laporan kehadiran detail
+/config - Konfigurasi clock in/out
+/setup - Setup pengingat otomatis
+/trigger_clockin - Kirim pengingat clock in manual
+/trigger_clockout - Kirim pengingat clock out manual
+/help - Bantuan penggunaan
 
-⏰ **Perintah Clock In/Out:**
-• `/clockin` - Clock in manual
-• `/clockout` - Clock out manual
-• `/check` - Cek status kehadiran hari ini
-• `/status` - Laporan kehadiran detail (Admin only)
-
-⚙️ **Perintah Konfigurasi (Admin only):**
-• `/config` - Menu konfigurasi clock in/out
-
-📋 **Cara Penggunaan:**
-1. Tambahkan bot sebagai admin grup
-2. Atur konfigurasi dengan `/config`
-3. Bot akan mengirim pengingat otomatis
-4. Anggota dapat clock in/out manual atau otomatis
-
-💡 **Tips:**
-• Pastikan bot memiliki izin untuk mengirim pesan
-• Konfigurasi hanya dapat diubah oleh admin
-• Data kehadiran disimpan dalam database SQLite
+**Fitur:**
+• Pengingat otomatis clock in/out
+• Konfigurasi waktu dan interval
+• Laporan kehadiran real-time
+• Tombol cepat untuk clock in/out
         """
+        await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN)
+    
+    async def trigger_clockin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /trigger_clockin command - manual trigger for clock in reminder"""
+        chat = update.effective_chat
+        user = update.effective_user
         
-        await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN) 
+        # Check if user is admin
+        if not await self.is_admin(update, context):
+            await update.message.reply_text("❌ Hanya admin yang dapat menggunakan command ini.")
+            return
+        
+        try:
+            current_time = get_current_time()
+            
+            # Get configuration
+            config = self.db.get_configuration(chat.id, 'clock_in')
+            if not config:
+                await update.message.reply_text("❌ Konfigurasi clock in belum diatur. Gunakan /config untuk mengatur.")
+                return
+            
+            # Get today's attendance
+            today_attendance = self.db.get_today_attendance(chat.id, current_time)
+            clock_in_count = len(today_attendance.get('clock_in', {}))
+            
+            # Create reminder message
+            message = (
+                f"⏰ **Pengingat Clock In Manual** - {current_time.strftime('%H:%M')}\n\n"
+                f"Admin {user.first_name} mengirim pengingat clock in.\n\n"
+            )
+            
+            if clock_in_count == 0:
+                message += "Belum ada yang clock in hari ini!\n\n"
+            else:
+                message += f"Sudah ada {clock_in_count} orang yang clock in.\n\n"
+            
+            message += "Silakan gunakan /clockin untuk mencatat kehadiran."
+            
+            keyboard = [
+                [InlineKeyboardButton("🕐 Clock In", callback_data="clock_in_button")],
+                [InlineKeyboardButton("📊 Cek Status", callback_data="refresh_attendance")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+            logger.info(f"Manual clock-in reminder triggered by {user.first_name} in chat {chat.id}")
+            
+        except Exception as e:
+            logger.error(f"Error in trigger_clockin_command: {e}")
+            await update.message.reply_text("❌ Terjadi kesalahan saat mengirim pengingat.")
+    
+    async def trigger_clockout_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle /trigger_clockout command - manual trigger for clock out reminder"""
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        # Check if user is admin
+        if not await self.is_admin(update, context):
+            await update.message.reply_text("❌ Hanya admin yang dapat menggunakan command ini.")
+            return
+        
+        try:
+            current_time = get_current_time()
+            
+            # Get configuration
+            config = self.db.get_configuration(chat.id, 'clock_out')
+            if not config:
+                await update.message.reply_text("❌ Konfigurasi clock out belum diatur. Gunakan /config untuk mengatur.")
+                return
+            
+            # Get today's attendance
+            today_attendance = self.db.get_today_attendance(chat.id, current_time)
+            clock_in_count = len(today_attendance.get('clock_in', {}))
+            clock_out_count = len(today_attendance.get('clock_out', {}))
+            
+            # Create reminder message
+            message = (
+                f"🌆 **Pengingat Clock Out Manual** - {current_time.strftime('%H:%M')}\n\n"
+                f"Admin {user.first_name} mengirim pengingat clock out.\n\n"
+                f"🟢 Clock In: {clock_in_count} orang\n"
+                f"🔴 Clock Out: {clock_out_count} orang\n\n"
+                f"Jangan lupa clock out sebelum pulang!"
+            )
+            
+            keyboard = [
+                [InlineKeyboardButton("🕕 Clock Out", callback_data="clock_out_button")],
+                [InlineKeyboardButton("📊 Cek Status", callback_data="refresh_attendance")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(message, reply_markup=reply_markup, parse_mode=ParseMode.MARKDOWN)
+            logger.info(f"Manual clock-out reminder triggered by {user.first_name} in chat {chat.id}")
+            
+        except Exception as e:
+            logger.error(f"Error in trigger_clockout_command: {e}")
+            await update.message.reply_text("❌ Terjadi kesalahan saat mengirim pengingat.")
+    
+    async def is_admin(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+        """Check if user is admin in the chat"""
+        try:
+            chat = update.effective_chat
+            user = update.effective_user
+            
+            # Get chat member info
+            chat_member = await context.bot.get_chat_member(chat.id, user.id)
+            
+            # Check if user is admin or creator
+            return chat_member.status in ['administrator', 'creator']
+            
+        except Exception as e:
+            logger.error(f"Error checking admin status: {e}")
+            return False 

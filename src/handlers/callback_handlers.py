@@ -130,8 +130,7 @@ class CallbackHandlers:
                 InlineKeyboardButton(f"📅 Hari: {get_enabled_days_display(enabled_days)}", callback_data="set_clock_in_days")
             ],
             [
-                InlineKeyboardButton("💾 Simpan", callback_data="save_clock_in"),
-                InlineKeyboardButton("❌ Batal", callback_data="cancel_config")
+                InlineKeyboardButton("🔙 Kembali", callback_data="config_main")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -171,8 +170,7 @@ class CallbackHandlers:
                 InlineKeyboardButton(f"📅 Hari: {get_enabled_days_display(enabled_days)}", callback_data="set_clock_out_days")
             ],
             [
-                InlineKeyboardButton("💾 Simpan", callback_data="save_clock_out"),
-                InlineKeyboardButton("❌ Batal", callback_data="cancel_config")
+                InlineKeyboardButton("🔙 Kembali", callback_data="config_main")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
