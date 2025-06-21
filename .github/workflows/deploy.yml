@@ -16,7 +16,8 @@ jobs:
       - name: Pull latest changes from main
         run: |
           cd /home/ubuntu/telegram-bappenas-bot
-          git pull origin main
+          git fetch origin
+          git reset --hard origin/main
 
       - name: Backup database before deployment
         run: |

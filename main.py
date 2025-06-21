@@ -97,9 +97,6 @@ class AttendanceBot:
             pattern="^view_"
         ))
         
-        # General callback handler (catch all) - should be last
-        self.application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback))
-        
         # Message handler for text input
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_text_message))
         

@@ -268,6 +268,14 @@ class CallbackHandlers:
         query = update.callback_query
         
         try:
+            # Store state for this user
+            user_id = query.from_user.id
+            self.config_states[user_id] = {
+                'type': 'days',
+                'config_type': config_type,
+                'chat_id': query.message.chat.id
+            }
+            
             # Get current configuration
             chat_id = query.message.chat.id
             current_config = self.db.get_configuration(chat_id, config_type)
@@ -283,7 +291,7 @@ class CallbackHandlers:
                 day_name = Settings.get_day_name(day_num)
                 is_enabled = day_num in enabled_days
                 button_text = f"{'✅' if is_enabled else '❌'} {day_name}"
-                callback_data = f"day_{config_type}_{day_num}"
+                callback_data = f"day_{day_num}"
                 keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
             
             keyboard.append([
@@ -308,12 +316,20 @@ class CallbackHandlers:
         
         try:
             parts = data.split('_')
-            if len(parts) != 3:
+            if len(parts) != 2:
                 await query.answer("❌ Format callback tidak valid")
                 return
                 
-            config_type = parts[1]
-            day_num_str = parts[2]
+            day_num_str = parts[1]
+            
+            # Get config_type from user state
+            user_id = query.from_user.id
+            user_state = self.config_states.get(user_id)
+            if not user_state or 'config_type' not in user_state:
+                await query.answer("❌ Sesi konfigurasi tidak ditemukan")
+                return
+                
+            config_type = user_state['config_type']
             
             # Validate config_type
             if config_type not in ['clock_in', 'clock_out']:
