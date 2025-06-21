@@ -272,12 +272,33 @@ class CallbackHandlers:
     async def handle_day_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, data: str):
         """Handle day selection callbacks"""
         query = update.callback_query
-        parts = data.split('_')
-        config_type = parts[1]
-        day_num = int(parts[2])
-        chat_id = query.message.chat.id
         
         try:
+            parts = data.split('_')
+            if len(parts) != 3:
+                await query.answer("❌ Format callback tidak valid")
+                return
+                
+            config_type = parts[1]
+            day_num_str = parts[2]
+            
+            # Validate config_type
+            if config_type not in ['clock_in', 'clock_out']:
+                await query.answer("❌ Tipe konfigurasi tidak valid")
+                return
+            
+            # Validate and convert day_num
+            try:
+                day_num = int(day_num_str)
+                if day_num < 0 or day_num > 6:
+                    await query.answer("❌ Nomor hari tidak valid")
+                    return
+            except ValueError:
+                await query.answer("❌ Format nomor hari tidak valid")
+                return
+            
+            chat_id = query.message.chat.id
+            
             # Get current configuration
             current_config = self.db.get_configuration(chat_id, config_type)
             

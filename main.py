@@ -61,10 +61,7 @@ class AttendanceBot:
         self.application.add_handler(CommandHandler("help", self.command_handlers.help_command))
         self.application.add_handler(CommandHandler("setup", self.chat_handlers.setup_commands))
         
-        # Callback query handlers
-        self.application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback))
-        
-        # Scheduled handlers callbacks
+        # Callback query handlers - specific patterns first
         self.application.add_handler(CallbackQueryHandler(
             self.scheduled_handlers.handle_clock_buttons, 
             pattern="^(clock_in_button|clock_out_button)$"
@@ -73,6 +70,35 @@ class AttendanceBot:
             self.scheduled_handlers.handle_refresh_attendance, 
             pattern="^refresh_attendance$"
         ))
+        
+        # Configuration callbacks
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_config_callback,
+            pattern="^config_"
+        ))
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_set_callback,
+            pattern="^set_"
+        ))
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_day_callback,
+            pattern="^day_"
+        ))
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_save_callback,
+            pattern="^save_"
+        ))
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_cancel_callback,
+            pattern="^cancel_"
+        ))
+        self.application.add_handler(CallbackQueryHandler(
+            self.callback_handlers.handle_view_callback,
+            pattern="^view_"
+        ))
+        
+        # General callback handler (catch all)
+        self.application.add_handler(CallbackQueryHandler(self.callback_handlers.handle_callback))
         
         # Message handler for text input
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.message_handlers.handle_text_message))
