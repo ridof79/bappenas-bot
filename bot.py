@@ -186,7 +186,8 @@ class ClockBot:
         try:
             # Get all chat members (this might be limited for large groups)
             chat_members = []
-            async for member in context.bot.get_chat_administrators(chat.id):
+            admins = await context.bot.get_chat_administrators(chat.id)
+            for member in admins:
                 if not member.user.is_bot:
                     chat_members.append(member.user)
             
