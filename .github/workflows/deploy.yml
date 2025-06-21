@@ -51,7 +51,7 @@ jobs:
 
   notify:
     needs: deploy
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: always()
 
     steps:
