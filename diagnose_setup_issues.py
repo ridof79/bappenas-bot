@@ -139,59 +139,6 @@ def check_orphaned_configurations():
     except Exception as e:
         print(f"Error: {e}")
 
-def test_save_configuration():
-    """Test saving configuration manually"""
-    print("\n=== Test Save Configuration ===\n")
-    
-    try:
-        # Test data
-        test_chat_id = -1001234567890
-        test_config_type = 'clock_in'
-        test_start_time = '08:00'
-        test_end_time = '09:00'
-        test_interval = 30
-        test_enabled_days = [0, 1, 2, 3, 4]  # Monday to Friday
-        
-        print(f"Testing with:")
-        print(f"  Chat ID: {test_chat_id}")
-        print(f"  Config Type: {test_config_type}")
-        print(f"  Start Time: {test_start_time}")
-        print(f"  End Time: {test_end_time}")
-        print(f"  Interval: {test_interval}")
-        print(f"  Enabled Days: {test_enabled_days}")
-        
-        conn = sqlite3.connect('attendance.db')
-        cursor = conn.cursor()
-        
-        # Test saving configuration
-        enabled_days_json = json.dumps(test_enabled_days)
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO configurations 
-            (chat_id, config_type, start_time, end_time, reminder_interval, 
-             enabled_days, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (test_chat_id, test_config_type, test_start_time, test_end_time, 
-              test_interval, enabled_days_json, datetime.now()))
-        
-        conn.commit()
-        print("✅ Test configuration saved successfully")
-        
-        # Verify it was saved
-        cursor.execute("SELECT * FROM configurations WHERE chat_id = ? AND config_type = ?", 
-                      (test_chat_id, test_config_type))
-        result = cursor.fetchone()
-        if result:
-            print(f"✅ Configuration verified: {result}")
-        else:
-            print("❌ Configuration not found after saving")
-        
-        conn.close()
-        
-    except Exception as e:
-        print(f"❌ Error testing save configuration: {e}")
-
-def test_add_chat_group():
     """Test adding chat group manually"""
     print("\n=== Test Add Chat Group ===\n")
     
@@ -244,9 +191,6 @@ def main():
     print("\n" + "=" * 60)
     print("Testing Database Operations")
     print("=" * 60)
-    
-    test_add_chat_group()
-    test_save_configuration()
     
     print("\n" + "=" * 60)
     print("Summary and Recommendations")
