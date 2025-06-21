@@ -27,8 +27,9 @@ class Database:
                         username TEXT,
                         clock_type TEXT NOT NULL, -- 'in' or 'out'
                         clock_time DATETIME NOT NULL,
+                        date_only TEXT NOT NULL, -- YYYY-MM-DD format for unique constraint
                         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(chat_id, user_id, clock_type, DATE(clock_time))
+                        UNIQUE(chat_id, user_id, clock_type, date_only)
                     )
                 ''')
                 
@@ -87,11 +88,13 @@ class Database:
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
+                date_only = clock_time.strftime('%Y-%m-%d')
+                
                 cursor.execute('''
                     INSERT OR REPLACE INTO attendance 
-                    (chat_id, user_id, user_name, username, clock_type, clock_time)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                ''', (chat_id, user_id, user_name, username, clock_type, clock_time))
+                    (chat_id, user_id, user_name, username, clock_type, clock_time, date_only)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (chat_id, user_id, user_name, username, clock_type, clock_time, date_only))
                 conn.commit()
                 return True
         except Exception as e:
