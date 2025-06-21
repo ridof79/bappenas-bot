@@ -177,21 +177,31 @@ class MessageHandlers:
     async def send_clock_in_reminder(self, context: ContextTypes.DEFAULT_TYPE):
         """Send clock in reminder to all active chats"""
         current_time = get_current_time()
+        logger.info(f"=== DEBUG: send_clock_in_reminder called at {current_time} ===")
         
         # Get all chat groups
         chat_groups = self.db.get_all_chat_groups()
+        logger.info(f"DEBUG: Found {len(chat_groups)} chat groups")
         
         for chat_group in chat_groups:
             chat_id = chat_group['chat_id']
+            logger.info(f"DEBUG: Processing chat {chat_id}")
             
             try:
                 # Get configuration
                 config = self.db.get_configuration(chat_id, 'clock_in')
                 if not config:
+                    logger.info(f"DEBUG: No clock_in config for chat {chat_id}")
                     continue
                 
+                logger.info(f"DEBUG: Config found for chat {chat_id}: {config}")
+                
                 # Check if today is enabled day
-                if current_time.weekday() not in config['enabled_days']:
+                current_weekday = current_time.weekday()
+                logger.info(f"DEBUG: Current weekday: {current_weekday}, Enabled days: {config['enabled_days']}")
+                
+                if current_weekday not in config['enabled_days']:
+                    logger.info(f"DEBUG: Today ({current_weekday}) not in enabled days for chat {chat_id}")
                     continue
                 
                 # Check if current time is within the configured time range
@@ -199,7 +209,10 @@ class MessageHandlers:
                 end_time = parse_time_string(config['end_time'])
                 current_time_obj = current_time.time()
                 
+                logger.info(f"DEBUG: Time check - Current: {current_time_obj}, Start: {start_time}, End: {end_time}")
+                
                 if not (start_time <= current_time_obj <= end_time):
+                    logger.info(f"DEBUG: Current time not in range for chat {chat_id}")
                     continue
                 
                 # Get today's attendance
@@ -207,6 +220,7 @@ class MessageHandlers:
                 
                 # Check if reminder should be sent (simplified logic)
                 clock_in_count = len(today_attendance.get('clock_in', {}))
+                logger.info(f"DEBUG: Clock in count for chat {chat_id}: {clock_in_count}")
                 
                 if clock_in_count == 0:
                     # No one has clocked in yet, send reminder
@@ -228,29 +242,43 @@ class MessageHandlers:
                         reply_markup=reply_markup,
                         parse_mode=ParseMode.MARKDOWN
                     )
-                    logger.info(f"Clock-in reminder sent to chat {chat_id}")
+                    logger.info(f"✅ Clock-in reminder sent to chat {chat_id}")
+                else:
+                    logger.info(f"DEBUG: Skipping reminder for chat {chat_id} - already {clock_in_count} people clocked in")
                 
             except Exception as e:
                 logger.error(f"Error sending clock-in reminder to {chat_id}: {e}")
+        
+        logger.info("=== DEBUG: send_clock_in_reminder completed ===")
     
     async def send_clock_out_reminder(self, context: ContextTypes.DEFAULT_TYPE):
         """Send clock out reminder to all active chats"""
         current_time = get_current_time()
+        logger.info(f"=== DEBUG: send_clock_out_reminder called at {current_time} ===")
         
         # Get all chat groups
         chat_groups = self.db.get_all_chat_groups()
+        logger.info(f"DEBUG: Found {len(chat_groups)} chat groups")
         
         for chat_group in chat_groups:
             chat_id = chat_group['chat_id']
+            logger.info(f"DEBUG: Processing chat {chat_id}")
             
             try:
                 # Get configuration
                 config = self.db.get_configuration(chat_id, 'clock_out')
                 if not config:
+                    logger.info(f"DEBUG: No clock_out config for chat {chat_id}")
                     continue
                 
+                logger.info(f"DEBUG: Config found for chat {chat_id}: {config}")
+                
                 # Check if today is enabled day
-                if current_time.weekday() not in config['enabled_days']:
+                current_weekday = current_time.weekday()
+                logger.info(f"DEBUG: Current weekday: {current_weekday}, Enabled days: {config['enabled_days']}")
+                
+                if current_weekday not in config['enabled_days']:
+                    logger.info(f"DEBUG: Today ({current_weekday}) not in enabled days for chat {chat_id}")
                     continue
                 
                 # Check if current time is within the configured time range
@@ -258,7 +286,10 @@ class MessageHandlers:
                 end_time = parse_time_string(config['end_time'])
                 current_time_obj = current_time.time()
                 
+                logger.info(f"DEBUG: Time check - Current: {current_time_obj}, Start: {start_time}, End: {end_time}")
+                
                 if not (start_time <= current_time_obj <= end_time):
+                    logger.info(f"DEBUG: Current time not in range for chat {chat_id}")
                     continue
                 
                 # Get today's attendance
@@ -267,6 +298,7 @@ class MessageHandlers:
                 # Check if reminder should be sent
                 clock_in_count = len(today_attendance.get('clock_in', {}))
                 clock_out_count = len(today_attendance.get('clock_out', {}))
+                logger.info(f"DEBUG: Attendance for chat {chat_id} - Clock in: {clock_in_count}, Clock out: {clock_out_count}")
                 
                 # Send reminder if it's time for clock out, regardless of clock in status
                 message = (
@@ -289,7 +321,9 @@ class MessageHandlers:
                     reply_markup=reply_markup,
                     parse_mode=ParseMode.MARKDOWN
                 )
-                logger.info(f"Clock-out reminder sent to chat {chat_id}")
+                logger.info(f"✅ Clock-out reminder sent to chat {chat_id}")
                 
             except Exception as e:
-                logger.error(f"Error sending clock-out reminder to {chat_id}: {e}") 
+                logger.error(f"Error sending clock-out reminder to {chat_id}: {e}")
+        
+        logger.info("=== DEBUG: send_clock_out_reminder completed ===") 
