@@ -66,13 +66,7 @@ jobs:
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_NOTIFY_TOKEN }}/sendMessage \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode=Markdown \
-            -d text="$ICON *Deployment Status*: *$STATUS*\n\
-📝 *Repository*: ${{ github.repository }}\n\
-🌿 *Branch*: ${{ github.ref_name }}\n\
-👤 *Author*: ${{ github.actor }}\n\
-💬 *Commit*: ${{ github.event.head_commit.message }}\n\
-⏰ *Time*: ${{ github.event.head_commit.timestamp }}\n\
-🔗 [View Commit](${{ github.event.head_commit.url }})"
+            -d text="$ICON *Deployment Status*: *$STATUS*\n\ 📝 *Repository*: ${{ github.repository }}\n\ 🌿 *Branch*: ${{ github.ref_name }}\n\ 👤 *Author*: ${{ github.actor }}\n\ 💬 *Commit*: ${{ github.event.head_commit.message }}\n\ ⏰ *Time*: ${{ github.event.head_commit.timestamp }}\n\ 🔗 [View Commit](${{ github.event.head_commit.url }})"
 
 
 
