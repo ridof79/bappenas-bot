@@ -70,35 +70,38 @@ class Database:
             raise
     
     def add_chat_group(self, chat_id: int, chat_title: str, chat_type: str):
-        """Add or update chat group"""
+        """Add a chat group to the database"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    INSERT OR REPLACE INTO chat_groups (chat_id, chat_title, chat_type)
-                    VALUES (?, ?, ?)
+                    INSERT OR REPLACE INTO chat_groups 
+                    (chat_id, chat_title, chat_type, created_at)
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                 ''', (chat_id, chat_title, chat_type))
                 conn.commit()
+                logger.info(f"✅ Chat group saved to database: ID={chat_id}, Title='{chat_title}', Type={chat_type}")
+                return True
         except Exception as e:
-            logger.error(f"Error adding chat group: {e}")
+            logger.error(f"❌ Error adding chat group to database: {e}")
+            return False
     
     def record_attendance(self, chat_id: int, user_id: int, user_name: str, 
                          username: str, clock_type: str, clock_time: datetime):
-        """Record clock in/out attendance"""
+        """Record attendance in the database"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                date_only = clock_time.strftime('%Y-%m-%d')
-                
                 cursor.execute('''
-                    INSERT OR REPLACE INTO attendance 
+                    INSERT INTO attendance 
                     (chat_id, user_id, user_name, username, clock_type, clock_time, date_only)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (chat_id, user_id, user_name, username, clock_type, clock_time, date_only))
+                    VALUES (?, ?, ?, ?, ?, ?, DATE(?))
+                ''', (chat_id, user_id, user_name, username, clock_type, clock_time, clock_time))
                 conn.commit()
+                logger.info(f"✅ Attendance recorded: Chat={chat_id}, User={user_name}({user_id}), Type={clock_type}, Time={clock_time}")
                 return True
         except Exception as e:
-            logger.error(f"Error recording attendance: {e}")
+            logger.error(f"❌ Error recording attendance: {e}")
             return False
     
     def get_today_attendance(self, chat_id: int, date: datetime) -> Dict:
@@ -153,9 +156,10 @@ class Database:
                     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ''', (chat_id, config_type, start_time, end_time, reminder_interval, enabled_days_json))
                 conn.commit()
+                logger.info(f"✅ Configuration saved: Chat={chat_id}, Type={config_type}, Time={start_time}-{end_time}, Interval={reminder_interval}min, Days={enabled_days}")
                 return True
         except Exception as e:
-            logger.error(f"Error saving configuration: {e}")
+            logger.error(f"❌ Error saving configuration: {e}")
             return False
     
     def get_configuration(self, chat_id: int, config_type: str) -> Optional[Dict]:
@@ -261,37 +265,4 @@ class Database:
                 
         except Exception as e:
             logger.error(f"Error getting all chat groups: {e}")
-            return []
-    
-    def get_all_active_configurations(self):
-        """Get all active configurations"""
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT chat_id, config_type, start_time, end_time, 
-                           reminder_interval, enabled_days, created_at, updated_at
-                    FROM configurations
-                    ORDER BY updated_at DESC
-                """)
-                
-                rows = cursor.fetchall()
-                configurations = []
-                
-                for row in rows:
-                    configurations.append({
-                        'chat_id': row[0],
-                        'config_type': row[1],
-                        'start_time': row[2],
-                        'end_time': row[3],
-                        'reminder_interval': row[4],
-                        'enabled_days': json.loads(row[5]) if row[5] else [],
-                        'created_at': row[6],
-                        'updated_at': row[7]
-                    })
-                
-                return configurations
-                
-        except Exception as e:
-            logger.error(f"Error getting all active configurations: {e}")
             return [] 
