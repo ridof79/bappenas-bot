@@ -7,7 +7,7 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/telegram-bappenas-bot
 Environment=PATH=/home/ubuntu/telegram-bappenas-bot/bot_env/bin
-Environment=BOT_TOKEN=YOUR_BOT_TOKEN_HERE
+EnvironmentFile=/home/ubuntu/telegram-bappenas-bot/.env
 ExecStart=/home/ubuntu/telegram-bappenas-bot/bot_env/bin/python main.py
 Restart=always
 RestartSec=10

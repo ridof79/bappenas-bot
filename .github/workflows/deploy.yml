@@ -58,6 +58,18 @@ jobs:
           mkdir -p data
           chmod 755 data
 
+      - name: Update environment file with bot token
+        run: |
+          cd /home/ubuntu/telegram-bappenas-bot
+          cat > .env << EOF
+          BOT_TOKEN=${{ secrets.BOT_TOKEN }}
+          DATABASE_PATH=data/attendance.db
+          LOG_LEVEL=INFO
+          LOG_FILE=data/bot.log
+          EOF
+          chmod 600 .env
+          echo "Environment file updated with bot token"
+
       - name: Update systemd service file
         run: |
           cd /home/ubuntu/telegram-bappenas-bot
