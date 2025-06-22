@@ -20,11 +20,23 @@ def format_time_display(time_obj: time) -> str:
     return time_obj.strftime('%H:%M')
 
 def is_time_between(current_time: time, start_time: time, end_time: time) -> bool:
-    """Check if current time is between start and end time"""
-    if start_time <= end_time:
-        return start_time <= current_time <= end_time
-    else:  # Handles cases where start time is after end time (overnight)
-        return current_time >= start_time or current_time <= end_time
+    """
+    Check if current time is between start and end time
+
+    Handles both same-day ranges (start_time <= end_time) and
+    overnight ranges (start_time > end_time, e.g., 22:00 to 06:00)
+    """
+    # Convert all times to minutes since midnight for easier comparison
+    current_mins = current_time.hour * 60 + current_time.minute
+    start_mins = start_time.hour * 60 + start_time.minute
+    end_mins = end_time.hour * 60 + end_time.minute
+
+    if start_mins <= end_mins:
+        # Same day range (e.g., 09:00 to 17:00)
+        return start_mins <= current_mins <= end_mins
+    else:
+        # Overnight range (e.g., 22:00 to 06:00)
+        return current_mins >= start_mins or current_mins <= end_mins
 
 def is_workday(date: datetime) -> bool:
     """Check if given date is a workday (Monday-Friday)"""
@@ -41,7 +53,7 @@ def format_attendance_report(attendance_data: Dict, date: datetime) -> str:
     """Format attendance data into a readable report"""
     date_str = date.strftime('%d/%m/%Y')
     report = f"📊 **Laporan Kehadiran - {date_str}**\n\n"
-    
+
     # Clock in section
     clock_in_count = len(attendance_data.get('clock_in', {}))
     report += f"🟢 **Clock In ({clock_in_count} orang):**\n"
@@ -50,9 +62,9 @@ def format_attendance_report(attendance_data: Dict, date: datetime) -> str:
             report += f"• {data['name']} - {data['time']}\n"
     else:
         report += "Belum ada yang clock in\n"
-    
+
     report += "\n"
-    
+
     # Clock out section
     clock_out_count = len(attendance_data.get('clock_out', {}))
     report += f"🔴 **Clock Out ({clock_out_count} orang):**\n"
@@ -61,33 +73,37 @@ def format_attendance_report(attendance_data: Dict, date: datetime) -> str:
             report += f"• {data['name']} - {data['time']}\n"
     else:
         report += "Belum ada yang clock out\n"
-    
+
     return report
 
 def create_mention_list(user_ids: List[int]) -> str:
-    """Create mention list for users"""
+    """
+    Create mention list for users using Telegram's tg://user?id= format
+    This creates clickable mentions that work even without knowing the username
+    """
     mentions = []
     for user_id in user_ids:
-        mentions.append(f"[@{user_id}](tg://user?id={user_id})")
+        # Use Telegram's internal mention format that works with user IDs
+        mentions.append(f"[User {user_id}](tg://user?id={user_id})")
     return ' '.join(mentions)
 
 def validate_configuration(start_time: str, end_time: str, 
                          reminder_interval: int, enabled_days: List[int]) -> Dict[str, str]:
     """Validate configuration parameters and return error messages"""
     errors = {}
-    
+
     if not Settings.validate_time_format(start_time):
         errors['start_time'] = "Format waktu tidak valid. Gunakan format HH:MM"
-    
+
     if not Settings.validate_time_format(end_time):
         errors['end_time'] = "Format waktu tidak valid. Gunakan format HH:MM"
-    
+
     if not Settings.validate_reminder_interval(reminder_interval):
         errors['reminder_interval'] = "Interval pengingat harus antara 1-1440 menit"
-    
+
     if not Settings.validate_enabled_days(enabled_days):
         errors['enabled_days'] = "Hari yang diaktifkan tidak valid"
-    
+
     return errors
 
 def get_next_reminder_time(current_time: datetime, reminder_interval: int) -> datetime:
@@ -101,7 +117,7 @@ def format_configuration_display(config: dict) -> str:
     end_time = config.get('end_time', 'N/A')
     interval = config.get('reminder_interval', 'N/A')
     enabled_days = config.get('enabled_days', [])
-    
+
     # Get clock type name
     if config_type == 'clock_in':
         clock_name = "🟢 **Clock In**"
@@ -109,13 +125,13 @@ def format_configuration_display(config: dict) -> str:
         clock_name = "🔴 **Clock Out**"
     else:
         clock_name = f"⚙️ **{config_type.replace('_', ' ').title()}**"
-    
+
     # Format enabled days
     days_display = get_enabled_days_display(enabled_days)
-    
+
     formatted = f"{clock_name}:\n"
     formatted += f"🕐 Waktu: {start_time} - {end_time}\n"
     formatted += f"⏰ Interval: {interval} menit\n"
     formatted += f"📅 Hari: {days_display}\n\n"
-    
+
     return formatted 

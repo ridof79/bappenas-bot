@@ -44,7 +44,7 @@ jobs:
 
           # Upgrade pip and install requirements
           pip install --upgrade pip
-          
+
           # Install requirements
           if [ -f "requirements.txt" ]; then
             pip install -r requirements.txt
@@ -75,9 +75,21 @@ jobs:
         run: |
           cd /home/ubuntu/telegram-bappenas-bot
           if [ -f "telegram-bot.service" ]; then
+            echo "Found telegram-bot.service in repository"
+            echo "Current service file content:"
+            cat telegram-bot.service
+
+            echo "Copying service file to /etc/systemd/system/"
             sudo cp telegram-bot.service /etc/systemd/system/
+
+            echo "Verifying service file was copied correctly:"
+            sudo cat /etc/systemd/system/telegram-bot.service
+
+            echo "Reloading systemd daemon"
             sudo systemctl daemon-reload
-            echo "Systemd service updated"
+            echo "✅ Systemd service updated successfully"
+          else
+            echo "❌ telegram-bot.service file not found in repository"
           fi
 
       - name: Restart Telegram bot service
@@ -91,7 +103,7 @@ jobs:
         run: |
           # Wait a bit for bot to start
           sleep 10
-          
+
           # Check if service is running
           if sudo systemctl is-active --quiet telegram-bot.service; then
             echo "✅ Bot service is running successfully"
@@ -105,7 +117,7 @@ jobs:
     needs: deploy
     runs-on: self-hosted
     if: always()
-    
+
     steps:
     - name: Notify via curl
       if: always()  # Ensures notification runs even if previous steps fail
@@ -113,15 +125,23 @@ jobs:
         STATUS="${{ job.status }}"
         ICON="🚀"
         COLOR="success"
-        
+
         if [ "$STATUS" != "success" ]; then
           ICON="❌"
           COLOR="failure"
         fi
-        
+
         # Escape special characters for Markdown
         COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | sed 's/[_*\[`]/\\&/g')
-        
+
+        # Check if service file was updated
+        SERVICE_FILE_STATUS="Unknown"
+        if sudo test -f /etc/systemd/system/telegram-bot.service; then
+          SERVICE_FILE_STATUS="Updated ($(date -r /etc/systemd/system/telegram-bot.service '+%Y-%m-%d %H:%M:%S'))"
+        else
+          SERVICE_FILE_STATUS="Not found"
+        fi
+
         MESSAGE=$(cat <<EOF
         $ICON *Deployment $COLOR*
         📝 *Repository*: \`${{ github.repository }}\`
@@ -131,9 +151,10 @@ jobs:
         ⏰ *Time*: ${{ github.event.head_commit.timestamp }}
         🔗 [View Commit](${{ github.event.head_commit.url }})
         📊 *Bot Status*: $(sudo systemctl is-active telegram-bot.service)
+        🔄 *Service File*: $SERVICE_FILE_STATUS
         EOF
         )
-        
+
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_NOTIFY_TOKEN }}/sendMessage" \
           -H "Content-Type: application/x-www-form-urlencoded" \
           -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
