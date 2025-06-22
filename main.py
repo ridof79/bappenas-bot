@@ -8,7 +8,7 @@ import asyncio
 import os
 from datetime import datetime, timedelta
 
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ChatMemberHandler, ApplicationHandlerStop
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ChatMemberHandler
 
 from src.database.database import Database
 from src.config.settings import Settings
@@ -38,8 +38,8 @@ class AttendanceBot:
         self.chat_handlers = ChatHandlers(self.database, self.scheduled_handlers)
         self.message_handlers = MessageHandlers(self.database, self.callback_handlers, self.scheduled_handlers)
 
-        # Initialize application
-        self.application = Application.builder().token(self.bot_token).build()
+        # Initialize application with startup and shutdown handlers
+        self.application = Application.builder().token(self.bot_token).post_init(self.on_startup).post_shutdown(self.on_shutdown).build()
 
         # Setup handlers
         self.setup_handlers()
@@ -220,14 +220,6 @@ def main():
 
         # Create and run bot
         bot = AttendanceBot()
-
-        # Set up startup and shutdown handlers
-        bot.application.add_handler(
-            ApplicationHandlerStop(callback=bot.on_startup, name="on_startup")
-        )
-        bot.application.add_handler(
-            ApplicationHandlerStop(callback=bot.on_shutdown, name="on_shutdown")
-        )
 
         # Run the bot
         bot.run()
