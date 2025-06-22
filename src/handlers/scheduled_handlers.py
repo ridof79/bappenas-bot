@@ -297,7 +297,7 @@ class ScheduledHandlers:
 
     def schedule_daily_messages(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE):
         """Schedule daily clock-in and clock-out messages plus reminders"""
-        job_queue = context.application.job_queue
+        job_queue = context.job_queue
 
         # Remove existing jobs for this chat if any
         job_names = [
@@ -350,7 +350,7 @@ class ScheduledHandlers:
     def _schedule_reminders(self, chat_id: int, context: ContextTypes.DEFAULT_TYPE, 
                           config_type: str, config: dict):
         """Schedule reminders based on configuration"""
-        job_queue = context.application.job_queue
+        job_queue = context.job_queue
         interval = config['reminder_interval']
 
         # Calculate reminder times based on start and end time
